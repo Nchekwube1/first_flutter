@@ -10,21 +10,12 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-             title: 'Startup name generator',
-
-      home: Scaffold(
-        appBar: AppBar(
-          title: const Text('Startup name generator'),
-        ),
-        body: const Center(
-          child: RandomWords(),
-        ),
-      ),
+    return const MaterialApp(
+      title: 'Startup name generator',
+      home: RandomWords(),
     );
   }
 }
-
 
 class RandomWords extends StatefulWidget {
   const RandomWords({Key? key}) : super(key: key);
@@ -36,27 +27,84 @@ class RandomWords extends StatefulWidget {
 class _RandomWordsState extends State<RandomWords> {
   @override
   Widget build(BuildContext context) {
-       final suggestions = <WordPair>[];
-  const biggerFont =  TextStyle(fontSize: 18);
-      // return Text(wordPair.asPascalCase);
-      return ListView.builder(
-  padding: const EdgeInsets.all(10.0),
-  itemBuilder: /*1*/ (context, i) {
-    if (i.isOdd) return const Divider(); /*2*/
+    final suggestions = <WordPair>[];
+    const biggerFont = TextStyle(fontSize: 18);
+    final saved = <WordPair>{};
 
-    final index = i ~/ 2; /*3*/
-    if (index >= suggestions.length) {
-      suggestions.addAll(generateWordPairs().take(20)); /*4*/
+    void pushSaved() {
+      Navigator.of(context).push(MaterialPageRoute<void>(
+        builder: (context) {
+          final tiles = saved.map(
+            (pair) {
+              return ListTile(
+                title: Text(
+                  pair.asPascalCase,
+                  style: biggerFont,
+                ),
+              );
+            },
+          );
+          final divided = tiles.isNotEmpty
+              ? ListTile.divideTiles(
+                  context: context,
+                  tiles: tiles,
+                ).toList()
+              : <Widget>[];
+
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text('Saved Suggestions'),
+            ),
+            body: ListView(children: divided),
+          );
+        },
+      ));
     }
-    // return Text(suggestions[index].asPascalCase);
-    return ListTile(
-  title: Text(
-    suggestions[index].asPascalCase,
-    style: biggerFont,
-  ),
-);
-  },
-);
+
+    // return Text(wordPair.asPascalCase);
+    return Scaffold(
+        appBar: AppBar(
+          title: const Text('Startup Name Generator'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.list),
+              onPressed: pushSaved,
+              tooltip: 'Saved Suggestions',
+            ),
+          ],
+        ),
+        body: ListView.builder(
+          padding: const EdgeInsets.all(10.0),
+          itemBuilder: /*1*/ (context, i) {
+            if (i.isOdd) return const Divider(); /*2*/
+
+            final index = i ~/ 2; /*3*/
+            if (index >= suggestions.length) {
+              suggestions.addAll(generateWordPairs().take(20)); /*4*/
+            }
+            final alreadySaved = saved.contains(suggestions[index]);
+            return ListTile(
+              title: Text(
+                suggestions[index].asPascalCase,
+                style: biggerFont,
+              ),
+              trailing: Icon(
+                alreadySaved ? Icons.favorite : Icons.favorite_border,
+                color: alreadySaved ? Colors.red : null,
+                semanticLabel: alreadySaved ? 'Remove from saved' : 'Save',
+              ),
+              onTap: () {
+                setState(() {
+                  if (alreadySaved) {
+                    saved.remove(suggestions[index]);
+                  } else {
+                    saved.add(suggestions[index]);
+                  }
+                });
+              },
+            );
+          },
+        ));
   }
 }
 
